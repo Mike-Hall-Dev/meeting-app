@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 
+
 namespace Meeting_App
 {
     public class Meeting
@@ -87,15 +88,19 @@ namespace Meeting_App
                             Console.WriteLine("Where will this calendar be loaded from? (Enter a file path)");
                             string filePath = Console.ReadLine();
                             currentCalendar = ReadCalendarFromFile(filePath);
+                            Console.WriteLine();
                             DisplayCalendarMenu(currentCalendar);
                             WriteCalendarToFile(currentCalendar, filePath);
                             break;
 
                         case "2":
-                            Console.WriteLine("Where would you like to save this calendar? (Enter a file path)");
-                            string filePathForSave = Console.ReadLine();
+                            Console.WriteLine("What would you like to call this file?");
+                            string fileName = Console.ReadLine();
+                            string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                            string savedLocation = documentsPath + "\\" + fileName + ".dat";
+                            Console.WriteLine();
                             DisplayCalendarMenu(currentCalendar);
-                            WriteCalendarToFile(currentCalendar, filePathForSave);
+                            WriteCalendarToFile(currentCalendar,savedLocation);
                             break;
 
                         case "3":
@@ -144,7 +149,7 @@ namespace Meeting_App
         }
 
         static void WriteCalendarToFile(List<Meeting> calendar, string filePath)
-        {
+        {          
             string dataString = "";
             foreach (Meeting meeting in calendar)
             {
@@ -169,7 +174,7 @@ namespace Meeting_App
                             AddMeetingToCalendar(calendar);
                             break;
                         case "2":
-                            Console.WriteLine("Remove Meeting");
+                            RemoveMeetingFromCalendar(calendar);
                             break;
                         case "3":
                             Console.WriteLine("View Schedule");
@@ -204,32 +209,45 @@ namespace Meeting_App
             DateTime end = DateTime.Parse(Console.ReadLine());      
             
             Meeting newMeeting = new Meeting(title, location, start, end);
-            calendar.Add(newMeeting);
-            /*bool conflict = false;
 
-            for(int i = 0; i < calendar.Count; i++)
+            for (int i = 0; i < calendar.Count; i++)
             {
                 if ((newMeeting.StartDateTime >= calendar[i].StartDateTime && newMeeting.StartDateTime <= calendar[i].EndDateTime) ||
                     (newMeeting.StartDateTime <= calendar[i].StartDateTime && newMeeting.EndDateTime > calendar[i].StartDateTime))
                 {
-                    Console.WriteLine("This meeting conflicts with: {0} - {1} ({2} - {3})",
-                        calendar[i].Title, calendar[i].Location, calendar[i].StartDateTime, calendar[i].EndDateTime + "\n");
+                    Console.WriteLine("\nWarning: New event overlaps with " + calendar[i].Title + " (" + calendar[i].StartDateTime.ToString() + " - " + calendar[i].EndDateTime.ToString() + ")\n");
+                    Console.WriteLine("Do you want to schedule a meeting with known conflicts? (y/n)");
+                    string choice = Console.ReadLine();
 
-                    Console.WriteLine("Do you wish to schedule meeting anyway? (y/n)");
-                    char choice = char.Parse(Console.ReadLine());
-
-                    if (choice == 'y' || choice == 'Y')
+                    if (choice == "y" || choice == "Y")
                     {
                         calendar.Add(newMeeting);
-                        conflict = true;
+                        return;
                     }
-                    else continue;
+                    else return;
                 }
-                if (!conflict)
+            }
+            calendar.Add(newMeeting);
+        }
+
+        static void RemoveMeetingFromCalendar(List<Meeting> calendar)
+        {
+            Console.WriteLine("Which meeting would you like to remove?");
+            Console.WriteLine("Meeting Title: ");
+            string title = Console.ReadLine();
+            Console.WriteLine("Meeting Start Time: ");     
+            DateTime startTime = DateTime.Parse(Console.ReadLine());
+            bool foundMeeting = false;
+
+            for ( int i = calendar.Count - 1; i > -1; i--)
+            {
+                if ((calendar[i].Title == title) && (calendar[i].StartDateTime.Date == startTime.Date))
                 {
-                    calendar.Add(newMeeting);
+                    calendar.Remove(calendar[i]);
+                    foundMeeting = true;
                 }
-            }*/
+            }
+            if (!foundMeeting) Console.WriteLine("Meeting not found.");
         }
 
         static void PrintCalendar(List<Meeting> calendar)
@@ -239,7 +257,7 @@ namespace Meeting_App
 
             do
             {
-                Console.Write(scheduleStart.ToString("g") + " | ");
+                Console.Write(scheduleStart.ToString("MM/dd") + " " + scheduleStart.ToString("hh:mm:tt") + " | ");
                 foreach (Meeting meeting in calendar)
                 {
                     if ((scheduleStart >= meeting.StartDateTime) && (scheduleStart < meeting.EndDateTime))
@@ -251,13 +269,6 @@ namespace Meeting_App
                 scheduleStart = scheduleStart.AddMinutes(30);
             }
             while (scheduleStart <= scheduleEnd);
-        }
-
-        static void ValidateFilePath(string filePath)
-        {
-            bool valid = File.Exists(filePath);
-
-            if (!valid) throw new Exception("Error, the file path is incorrect.");
         }
 
     }
